@@ -1,12 +1,15 @@
 from pathlib import Path
 import re
 import random
+import csv
+from datetime import date
 
 #No need to mess w/ this stuff, patterns pull from the formatted files
 BASE_DIR = Path(__file__).resolve().parent
 QUESTION_PATTERN = re.compile(r"^#{1,6}\s*(\d+)\.\s*(.+?)\s*$")
 OPTION_PATTERN = re.compile(r"^([A-D])\.\s*(.+?)\s*$", re.I)
 ANSWER_PATTERN = re.compile(r"^(\d+)\.\s*([A-D])\b", re.I)
+SCORE_FILE = BASE_DIR / "score_history.csv"
 
 
 def choose_quiz():
@@ -96,6 +99,30 @@ def is_correct(response, question):
 	return False
 
 
+def save_score(player_name, score, quiz_name, accuracy, completed_date):
+	fieldnames = ["player_name", "score", "quiz_name",
+				  "accuracy_percentage", "date"]
+
+	try:
+		file_exists = SCORE_FILE.exists()
+		with SCORE_FILE.open("a", newline="", encoding="utf-8") as csv_file:
+			writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+			if not file_exists:
+				writer.writeheader()
+
+			writer.writerow({
+				"player_name": player_name,
+				"score": score,
+				"quiz_name": quiz_name,
+				"accuracy_percentage": f"{accuracy:.2f}",
+				"date": completed_date,
+			})
+		return True
+	except OSError as error:
+		print(f"Could not save score: {error}")
+		return False
+
+
 def main():
 	# Run quiz selection, ask up to five random questions, and show the final score.
 	question_file = choose_quiz()
@@ -107,6 +134,10 @@ def main():
 	if not questions:
 		print(f"No usable questions found in {question_file.name}.")
 		return
+
+	player_name = input("Player name: ").strip()
+	if not player_name:
+		player_name = "Unknown"
 
 	correct = 0
 	print(f"\n{question_file.stem} quiz\n")
@@ -127,6 +158,13 @@ def main():
 			print(f"Incorrect. Correct answer: {question['answer']}\n")
 
 	print(f"Results: {correct} correct, {len(quiz_questions) - correct} incorrect.")
+	accuracy = (correct / len(quiz_questions)) * 100
+	print(f"Accuracy: {accuracy:.2f}%")
+
+	if quiz_questions:
+		if save_score(player_name, correct, question_file.stem,
+					  accuracy, date.today().isoformat()):
+			print("Score saved.")
 
 
 if __name__ == "__main__":
