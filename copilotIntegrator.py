@@ -6,7 +6,9 @@ def promptBuilder(topic) -> str:
     prompt: str = 'return a markdown document with 10 multiple choice trivia questions on ' + topic
     return prompt
 
-
+def quizFixerPrompt(quizPath):
+    prompt: str = 'return a new markdown document based on the file at '+quizPath+' with a template matching RobertPQuestions.md; keep the content the same'
+    return prompt
 
 async def queryer(prompt: str) -> str:
     print('starting Copilot SDK client...')
@@ -22,8 +24,10 @@ async def queryer(prompt: str) -> str:
     print('SDK client closed.')
     return content
 
-print(promptBuilder('Robert Pattinson Movies'))
-response: str = asyncio.run(queryer(promptBuilder('Robert Pattinson Movies')))
-with open(r'U:\PY2026f\triviaProgram\TriviaProgram\RobertPQuestions.md', "w", encoding = 'utf-8') as file:
+# response: str = asyncio.run(queryer(promptBuilder('Reno Fun Facts')))
+# with open(r'triviaProgram\TriviaProgram\renoQuestions.md', "w", encoding = 'utf-8') as file:
+#     file.write(str(response))
+
+response = asyncio.run(queryer(quizFixerPrompt('renoQuestions.md')))
+with open(r'triviaProgram\TriviaProgram\renoQuestionsFixed.md', "w", encoding = 'utf-8') as file:
     file.write(str(response))
-print('write completed')
